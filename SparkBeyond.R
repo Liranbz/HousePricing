@@ -140,3 +140,70 @@ summary(model5)
 Linear_Predictions_model5=predict(model5)
 RMSE=RMSE(data$price,Linear_Predictions_model5)
 
+
+
+#------------------------Neural Network----------------------------------------
+library(keras)
+library(caret)
+library(tensorflow)
+library(tidyverse)
+Train=select_if(Train, is.numeric)
+y = Train[,c(2)]
+x = as.matrix(Train[,-c(2)]) 
+Cat_num=length(unique(Train[,11]))
+# scale to [0,1]
+x = as.matrix(apply(x, 2, function(x) (x-min(x))/(max(x) - min(x))))
+
+# one hot encode classes / create DummyFeatures
+levels(y) = 1:length(y)
+y=as.matrix(Train[,2])
+# create sequential model
+model = keras_model_sequential()
+
+# add layers
+model %>%
+  layer_dense(input_shape = ncol(x), units = 10, activation = "relu") %>%
+  layer_dense(units = 64, activation = "relu") %>%
+  layer_dense(units = 64, activation = "relu") %>%
+  layer_dense(units = 1, activation = "linear")
+summary(model)
+
+# add a loss function and optimizer
+model %>%
+  compile(
+    loss = "mse",
+    optimizer = "adam",
+    metrics = ('mse')
+  )
+model
+# fit model with our training data set.
+fit = model %>%
+  fit(
+    x = x,
+    y = y,
+    shuffle = T,
+    batch_size = 64,
+    validation_split = 0.3,
+    epochs = 15
+  )
+plot(fit)
+###################
+y_test = Test[,11]
+x_test = Test[,-c(2,11)]
+Cat_num=length(unique(Test[,11]))
+# scale to [0,1]
+x_test = as.matrix(apply(x_test, 2, function(x) (x-min(x))/(max(x) - min(x))))
+
+# one hot encode classes / create DummyFeatures
+levels(y_test) = 1:length(y_test)
+y_test = as.matrix(Test[,11])
+
+#6 B:
+model %>% evaluate(x_test, y_test)
+Predictions_vec=model %>% predict_classes(x_test)
+Correct_pred=c(Predictions_vec==as.numeric(as.character(Test[,11])))
+sum(Correct_pred)/length(Correct_pred)
+#confmat
+confmat <- confusionMatrix(Test[,11], as.factor(Predictions_vec))
+confmat
+
