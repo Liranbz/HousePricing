@@ -1,5 +1,7 @@
-#####My Home Test################
-#---Liran Ben-Zion--------
+#####-------------------------------------- My Home Test-----------------------------################
+#------------------------------------owner: Liran Ben-Zion-------------------------------------------
+#------------------------------------email- bzliran@gmail.com----------------------------------------
+
 rm(list=ls())
 library(dplyr)
 library(data.table)
@@ -34,15 +36,8 @@ data$rate <- data$price/data$sqft_living
 # Checking how many NA are there
 missing_values_summary_table<-t(md.pattern(data, plot = TRUE))
 
-plot(data$price~data$waterfront)      # less than 0.5% have waterfront
-table(data$view)            # approax 10% has other than zero views 1,2,3,4
-table(data$bedrooms)        # mostly bedrooms are between 1-6
-table(data$bathrooms)      # mostly accounts for 1,1.5,1.75,2,2.25,2.5,2.5,3,3.5 total 30
-table(data$condition)      # mostly 3 then 4 then 5 then 2 then 1
-table(data$grade)          # mostly 5-9 out of 1-12
-table(data$floors)         # mostly 1 and 2 then 1.5
-
 #----------------------------corrleations-----------------------------------------
+library(GGally)
 numeric_data<-select_if(data, is.numeric)
 cor <- rcorr(as.matrix(numeric_data))
 M <- cor$r
@@ -63,7 +58,7 @@ corrplot(M, method = "color", col = col(200),
 hist(data$price)
 ## Checking Relationship between price, bedrooms, bathrooms, sqft_living and sqft lot
 plot1<-ggpairs(data=data, columns=2:6,
-               mapping = aes(color = "dark green"),
+               mapping = aes(color = "dark red"),
                axisLabels="show")
 plot1
 
@@ -71,17 +66,18 @@ plot1
 attach(mtcars)
 par(mfrow=c(4,2))
 plot(data$sqft_living,log(data$price), main="Scatterplot of sqft_living vs. price", xlab = "sqft_living",ylab = "Price",col="blue")
-plot(data$sqft_lot,log(data$price), main="Scatterplot of wt vs disp", xlab = "sqft_lot",ylab = "Price",col="red")
-plot(data$sqft_living15,log(data$price),main="Scatterplot of wt vs disp", xlab = "sqft_living15",ylab = "Price",col="green")
-plot(data$sqft_lot15,log(data$price),main="Scatterplot of wt vs disp", xlab = "sqft_lot15",ylab = "Price",col="purple")
-plot(data$sqft_above,log(data$price), main="Scatterplot of wt vs disp", xlab = "sqft_above",ylab = "Price",col="dark red")
-plot(data$sqft_basement,log(data$price), main="Scatterplot of wt vs disp", xlab = "sqft_basement",ylab = "Price",col="dark blue")
+plot(data$sqft_lot,log(data$price), main="Scatterplot of sqft_lot vs. price", xlab = "sqft_lot",ylab = "Price",col="red")
+plot(data$sqft_living15,log(data$price),main="Scatterplot of sqft_living15 vs. price", xlab = "sqft_living15",ylab = "Price",col="green")
+plot(data$sqft_lot15,log(data$price),main="Scatterplot of sqft_lot15 vs price", xlab = "sqft_lot15",ylab = "Price",col="purple")
+plot(data$sqft_above,log(data$price), main="Scatterplot of sqft_above vs price", xlab = "sqft_above",ylab = "Price",col="dark red")
+plot(data$sqft_basement,log(data$price), main="Scatterplot of sqft_basement vs price", xlab = "sqft_basement",ylab = "Price",col="dark blue")
 
 #Price vs Bedrooms
-p1<-ggplot(data,aes(bedrooms, log(price)), main="Scatterplot of Bedrooms vs. price", xlab = "bedrooms",ylab = "Price",col="blue")
+p1<-ggplot(data,aes(bedrooms,price), main="Scatterplot of Bedrooms vs. price", 
+           xlab = "bedrooms",ylab = "Price",col="blue")+ xlim(1,10)
 p1+geom_bar(stat = "identity")
 
-plot(data$price~data$bedrooms)
+plot(data$price~factor(data$bedrooms), main="plot of Bedrooms vs. price" )
 
 #------------sets for train and test----
 #sample data
@@ -106,16 +102,13 @@ Train=Train_test_Data$Train
 Test=Train_test_Data$Test
 
 
-#Linear Regression-Full model
+#-----------------------Linear Regression models------------------------------------------------------
 full_model=lm(formula = Train$price~.,data = Train)
 summary(full_model)
 
 Linear_Predictions=predict(full_model)
-
 Test$predicted_price=predict(full_model,Test)
 RMSE=RMSE(Test$price,Test$predicted_price)
-
-
 
 #model 3
 model3 <- lm(price~ sqft_living + bedrooms + bathrooms + grade + sqft_above + zipcode,data = data)
@@ -128,20 +121,20 @@ summary(model4)
 #model 5-log to price+vars
 model5 <- lm(log(price)~ log(sqft_living) + bedrooms + bathrooms + grade + log(sqft_above) + zipcode+age+lat+long,data = data)
 summary(model5)
-Linear_Predictions_model5=predict(model5)
-RMSE=RMSE(data$price,Linear_Predictions_model5)
+Linear_Predictions_model5=predict(model5,Test)
+RMSE=RMSE(Test$price,Linear_Predictions_model5)
 
-#----------------------try all caret models-------------
+#---------------------------------------Machine Learning models-------------------------
+#----------------------try all ML regression models from caret library-------------
 install.packages.compile.from.source = "always"
 install.packages(c("feather","tidyr"), type = "both")
 
 library(caret)
 library(foreach)
 library(doParallel)
-
-#rm(list=ls())
 gc()
-
+setwd("C:\\Users\\benzionl\\Desktop\\SB")
+#--------train control-----
 trCtrl <- trainControl(
   method = "repeatedcv"
   , number = 2
@@ -155,13 +148,12 @@ str(ttt)
 
 # all caret models
 names(getModelInfo())
-#c('adaboost', 'AdaBoost.M1', 'amdai', 'ANFIS', 'vglmAdjCat', 'AdaBag', 'treebag', 'bagFDAGCV', 'bagFDA', 'logicBag', 'bagEarth', 'bagEarthGCV', 'bag', 'bartMachine', 'bayesglm', 'brnn', 'bridge', 'blassoAveraged', 'binda', 'ada', 'gamboost', 'glmboost', 'BstLm', 'LogitBoost', 'bstSm', 'blackboost', 'bstTree', 'J48', 'C5.0', 'rpart', 'rpart1SE', 'rpart2', 'rpartScore', 'chaid', 'cforest', 'ctree', 'ctree2', 'vglmContRatio', 'C5.0Cost', 'rpartCost', 'cubist', 'vglmCumulative', 'deepboost', 'dda', 'dwdPoly', 'dwdRadial', 'DENFIS', 'enet', 'randomGLM', 'xgbDART', 'xgbLinear', 'xgbTree', 'elm', 'RFlda', 'fda', 'FIR.DM', 'FRBCS.CHI', 'FH.GBML', 'SLAVE', 'GFS.FR.MOGUL', 'GFS.THRIFT', 'FRBCS.W', 'gaussprLinear', 'gaussprPoly', 'gaussprRadial', 'gamLoess', 'bam', 'gam', 'gamSpline', 'glm', 'glmStepAIC', 'gpls', 'GFS.LT.RS', 'glmnet', 'glmnet_h2o', 'gbm_h2o', 'protoclass', 'hda', 'hdda', 'hdrda', 'HYFIS', 'icr', 'kknn', 'knn', 'svmLinearWeights2', 'svmLinear3', 'lvq', 'lars', 'lars2', 'lssvmLinear', 'lssvmPoly', 'lssvmRadial', 'lda', 'lda2', 'stepLDA', 'dwdLinear', 'lm', 'leapBackward', 'leapForward', 'leapSeq', 'lmStepAIC', 'svmLinearWeights', 'loclda', 'logreg', 'LMT', 'Mlda', 'mda', 'manb', 'avNNet', 'M5Rules', 'M5', 'monmlp', 'mlp', 'mlpWeightDecay', 'mlpWeightDecayML', 'mlpML', 'msaenet', 'mlpSGD', 'mlpKerasDropout', 'mlpKerasDropoutCost', 'mlpKerasDecay', 'mlpKerasDecayCost', 'earth', 'gcvEarth', 'naive_bayes', 'nb', 'nbDiscrete', 'awnb', 'pam', 'glm.nb', 'mxnet', 'mxnetAdam', 'neuralnet', 'nnet', 'pcaNNet', 'rqnc', 'null', 'nnls', 'ORFlog', 'ORFpls', 'ORFridge', 'ORFsvm', 'ownn', 'polr', 'parRF', 'partDSA', 'kernelpls', 'pls', 'simpls', 'widekernelpls', 'plsRglm', 'PRIM', 'pda', 'pda2', 'PenalizedLDA', 'penalized', 'plr', 'multinom', 'ordinalNet', 'krlsPoly', 'pcr', 'ppr', 'qda', 'stepQDA', 'qrf', 'qrnn', 'rqlasso', 'krlsRadial', 'rbf', 'rbfDDA', 'rFerns', 'ordinalRF', 'ranger', 'Rborist', 'rf', 'extraTrees', 'rfRules', 'rda', 'rlda', 'regLogistic', 'RRF', 'RRFglobal', 'relaxo', 'rvmLinear', 'rvmPoly', 'rvmRadial', 'ridge', 'foba', 'Linda', 'rlm', 'rmda', 'QdaCov', 'rrlda', 'RSimca', 'rocc', 'rotationForest', 'rotationForestCp', 'JRip', 'PART', 'xyf', 'nbSearch', 'sda', 'CSimca', 'FS.HGD', 'C5.0Rules', 'C5.0Tree', 'OneR', 'sdwd', 'sparseLDA', 'smda', 'spls', 'spikeslab', 'slda', 'snn', 'dnn', 'gbm', 'SBC', 'superpc', 'svmBoundrangeString', 'svmRadialWeights', 'svmExpoString', 'svmLinear', 'svmLinear2', 'svmPoly', 'svmRadial', 'svmRadialCost', 'svmRadialSigma', 'svmSpectrumString', 'blasso', 'lasso', 'tan', 'tanSearch', 'awtan', 'evtree', 'nodeHarvest', 'vbmpRadial', 'WM', 'wsrf')
 
+#regression ML models only:
 caret_models <-c("xgbDART","xgbLinear","ppr","gamLoess","cubist","glm","lm","foba","monmlp","glmStepAIC","lmStepAIC","lars2","rqnc","lars","extraTrees","glmnet","qrf","penalized","bagEarthGCV","bagEarth","xgbTree","Rborist","glmboost","M5Rules","M5","ranger","parRF","nnls","rf","RRFglobal","earth","gcvEarth","msaenet","RRF","relaxo","bstTree","leapBackward","blackboost","gbm","nodeHarvest","treebag","kknn","evtree","rpart1SE","rpart2","icr","rpart","partDSA","leapForward","leapSeq","kernelpls","pls","simpls","widekernelpls","BstLm","pcr","knn","svmRadial","svmRadialCost","xyf","svmRadialSigma","null","neuralnet","mlpWeightDecayML","mlp","rfRules","mlpWeightDecay","gaussprRadial","dnn","mlpML","rqlasso","rvmRadial","avNNet","nnet","pcaNNet","superpc","rbfDDA","svmLinear3","svmPoly","randomGLM","svmLinear2","svmLinear")
-caret_models<-c("xgbLinear")
 
 # create a log file
-fname <- 'C:\\Users\\benzionl\\Desktop\\SB\\ttt.log'
+fname <- 'ttt.log'
 cat(paste0(paste('counter','method','user','system','elapsed','mse',sep=','),'\n'), file=fname)
 
 counter <- 0
@@ -181,32 +173,95 @@ for(current_method in caret_models) {
   })
 }
 
-
+#----------------------------------------model_xgbLinear with some features-------------------------------------------
 model_xgbLinear1<-train(form = price~sqft_living + bedrooms + bathrooms + grade + sqft_above + zipcode, data=Train, trControl = trCtrl,method='xgbLinear')
+
+summary(model_xgbLinear1) # summarizing the model
 print(model_xgbLinear1)
 plot(model_xgbLinear1)
 varImp(object=model_xgbLinear1)
+plot(varImp(object=model_xgbLinear1),main="model_xgbLinear - Variable Importance, 6 features")
+
+#Predictions
+predictions1<-predict.train(object=model_xgbLinear1,Test[,-Test$price],type="raw")
+RMSE_model_xgbLinear1=RMSE(predictions1,Test$price)
+
+#----------------------------------------model_xgbLinear- all features-------------------------------------------
 model_xgbLinear<-train(form = price~., data=Train, trControl = trCtrl,method='xgbLinear')
-# summarizing the model
-print(model_xgbLinear)
+
+print(model_xgbLinear)  # summarizing the model
 plot(model_xgbLinear)
 varImp(object=model_xgbLinear)
 #Plotting Varianle importance for model_xgbLinear
-plot(varImp(object=model_xgbLinear),main="model_xgbLinear - Variable Importance")
+#plot(varImp(object=model_xgbLinear),main="model_xgbLinear - Variable Importance")
 
 #Predictions
 predictions<-predict.train(object=model_xgbLinear,Test[,-Test$price],type="raw")
-table(predictions)
-confusionMatrix(predictions,Test[,Test$price])
+RMSE_model_xgbLinear1=RMSE(predictions,Test$price)
+
+#----------------------------------------nnet with features--------------------------------------------
+model_nnet<-train(form = price~sqft_living + bedrooms + bathrooms + grade + sqft_above + zipcode, data=Train, trControl = trCtrl,method='nnet')
+
+summary(model_nnet) # summarizing the model
+print(model_nnet)
+plot(model_nnet)
+varImp(object=model_nnet)
+plot(varImp(object=model_nnet),main="model_nnet - Variable Importance, 6 features")
+
+#Predictions
+predictions_nnet<-predict.train(object=model_nnet,Test[,-Test$price],type="raw")
+RMSE_model_nnet=RMSE(predictions_nnet,Test$price)
+
+#----------------------------------------RF- with features-------------------------------------------
+
+model_rf<-train(form = price~sqft_living + bedrooms + grade + sqft_above + zipcode+lat+long, data=Train, trControl = trCtrl,method='rf')
+
+summary(model_rf)
+print(model_rf)
+plot(model_rf)
+varImp(object=model_rf)
+plot(varImp(object=model_rf),main="model_rf - Variable Importance, 6 features")
+
+#Predictions
+predictions_rf<-predict.train(object=model_rf,Test[,-Test$price],type="raw")
+RMSE_model_xgbLinear1=RMSE(predictions_rf,Test$price)
 
 
-model_rf<-train(form = price~., data=Train, trControl = trCtrl,method='rf')
-prediction_xgb4 = predict(model_xgb4, test)
 
-model_nnet<-train(form = price~., data=Train, trControl = trCtrl,method='nnet')
+#---------------------------------jointEntropy--------------------------------
 
-#---------------------Entropy for feature selection-----------------
-library(entropy)
+a=c(1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0)
+b=c(1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0)
+labels=c(1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0)
+
+jointEntropy=function(a,b,labels){
+  
+#calc entropy for array a
+t_a=table(a,labels)
+prop1=t_a[1,]/sum(t_a[1,])
+prop2=t_a[2,]/sum(t_a[2,])
+
+H1=-(prop1[1]*log2(prop1[1]))-(prop1[2]*log2(prop1[2]))
+H2=-(prop2[1]*log2(prop2[1]))-(prop2[2]*log2(prop2[2]))
+
+entropy_a=(table(a)[1]/length(a))*H1 +(table(a)[2]/length(a))*H2
+
+#calc entropy for array b
+t_b=table(b,labels)
+prop1=t_b[1,]/sum(t_b[1,])
+prop2=t_b[2,]/sum(t_b[2,])
+
+H1=-(prop1[1]*log2(prop1[1]))-(prop1[2]*log2(prop1[2]))
+H2=-(prop2[1]*log2(prop2[1]))-(prop2[2]*log2(prop2[2]))
+
+entropy_b=(table(b)[1]/length(b))*H1 +(table(b)[2]/length(b))*H2
+
+#find the entropy value
+entropy=sum(entropy_a,entropy_b)
+
+return (abs(entropy - 0.344) < 0.01)
+}
 
 
-
+#get results from function
+jointEntropy(a,b,labels)
