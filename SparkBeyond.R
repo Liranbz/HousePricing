@@ -1,6 +1,6 @@
-#####-------------------------------------- My Home Test-----------------------------################
-#------------------------------------owner: Liran Ben-Zion-------------------------------------------
-#------------------------------------email- bzliran@gmail.com----------------------------------------
+#####------------------------------------ My Home Test-Spark Beyond-----------------------------################
+#-------------------------------------------owner: Liran Ben-Zion-------------------------------------------
+#-------------------------------------------email- bzliran@gmail.com----------------------------------------
 
 rm(list=ls())
 library(dplyr)
@@ -53,7 +53,7 @@ corrplot(M, method = "color", col = col(200),
          diag = FALSE 
 )
 
-#-------------Plots---------------------------
+#----------------------------------------Plots---------------------------
 # histogram of prices
 hist(data$price)
 ## Checking Relationship between price, bedrooms, bathrooms, sqft_living and sqft lot
@@ -79,7 +79,7 @@ p1+geom_bar(stat = "identity")
 
 plot(data$price~factor(data$bedrooms), main="plot of Bedrooms vs. price" )
 
-#------------sets for train and test----
+#--------------------------------------Create sets for train and test--------------------------------------
 #sample data
 row_sampler=function(df){
   set.seed(789)
@@ -102,7 +102,7 @@ Train=Train_test_Data$Train
 Test=Train_test_Data$Test
 
 
-#-----------------------Linear Regression models------------------------------------------------------
+#-----------------------------------------Linear Regression models------------------------------------------------------
 full_model=lm(formula = Train$price~.,data = Train)
 summary(full_model)
 
