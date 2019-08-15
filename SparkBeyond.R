@@ -174,18 +174,21 @@ for(current_method in caret_models) {
 }
 
 #----------------------------------------model_xgbLinear with some features-------------------------------------------
-model_xgbLinear1<-train(form = price~sqft_living + bedrooms + bathrooms + grade + sqft_above + zipcode, data=Train, trControl = trCtrl,method='xgbLinear')
+model_xgbLinear1<-train(form = price~sqft_living + bedrooms + bathrooms + grade + sqft_above +lat+long, data=Train, trControl = trCtrl,method='xgbLinear')
 
 summary(model_xgbLinear1) # summarizing the model
 print(model_xgbLinear1)
 plot(model_xgbLinear1)
 varImp(object=model_xgbLinear1)
-plot(varImp(object=model_xgbLinear1),main="model_xgbLinear - Variable Importance, 6 features")
+plot(varImp(object=model_xgbLinear1),main="model_xgbLinear - Variable Importance, 7 features")
 
 #Predictions
 predictions1<-predict.train(object=model_xgbLinear1,Test[,-Test$price],type="raw")
 RMSE_model_xgbLinear1=RMSE(predictions1,Test$price)
 
+library(PRROC)
+roc<-roc.curve(predictions1,Test$price,curve = TRUE)
+roc
 #----------------------------------------model_xgbLinear- all features-------------------------------------------
 model_xgbLinear<-train(form = price~., data=Train, trControl = trCtrl,method='xgbLinear')
 
