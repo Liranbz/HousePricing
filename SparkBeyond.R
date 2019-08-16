@@ -232,39 +232,99 @@ RMSE_model_xgbLinear1=RMSE(predictions_rf,Test$price)
 
 
 #---------------------------------jointEntropy--------------------------------
+#note: If you want to calculate entropy of 2 combined arrays, we can double them like this:
+#ab=a*b, and to get new combined array
+#then, we can find the entropy with the ent_function in row 246.
 
-a=c(1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0)
-b=c(1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0)
-labels=c(1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0)
 
-jointEntropy=function(a,b,labels){
-  
-#calc entropy for array a
-t_a=table(a,labels)
-prop1=t_a[1,]/sum(t_a[1,])
-prop2=t_a[2,]/sum(t_a[2,])
 
-H1=-(prop1[1]*log2(prop1[1]))-(prop1[2]*log2(prop1[2]))
-H2=-(prop2[1]*log2(prop2[1]))-(prop2[2]*log2(prop2[2]))
 
-entropy_a=(table(a)[1]/length(a))*H1 +(table(a)[2]/length(a))*H2
-
-#calc entropy for array b
-t_b=table(b,labels)
-prop1=t_b[1,]/sum(t_b[1,])
-prop2=t_b[2,]/sum(t_b[2,])
-
-H1=-(prop1[1]*log2(prop1[1]))-(prop1[2]*log2(prop1[2]))
-H2=-(prop2[1]*log2(prop2[1]))-(prop2[2]*log2(prop2[2]))
-
-entropy_b=(table(b)[1]/length(b))*H1 +(table(b)[2]/length(b))*H2
-
-#find the entropy value
-entropy=sum(entropy_a,entropy_b)
-
-return (abs(entropy - 0.344) < 0.01)
+jointEntropy=function(a,b,labels){ #get 2 arrays and labels
+  ent_1<-ent_function(a,labels)   # calculate entropy for each array
+  ent_2<-ent_function(b,labels)
+  return(sum(ent_1,ent_2))        #return sum of them
 }
 
 
+ent_function=function(a,labels){  #calculate entropy for array by labels
+  #calc entropy for array 
+  t_a=table(a,labels)             #create summary table
+  if (min(a) < 0 || sum(a) <= 0)  #basic condition
+  {
+    entropy_a=0
+  }
+  else
+  {#calc proportions from table
+    prop1=t_a[1,]/sum(t_a[1,])   
+    
+    if(prop1[1]==0&&prop1[2]!=0){
+      H1=-(prop1[2]*log2(prop1[2]))
+    }
+    if(prop1[1]!=0&&prop1[2]==0){
+      H1=-(prop1[1]*log2(prop1[1]))
+    }
+    if(prop1[1]!=0&&prop1[2]!=0){
+      H1=-(prop1[1]*log2(prop1[1]))-(prop1[2]*log2(prop1[2]))
+    }
+    H1=as.numeric(H1)
+    entropy_a=(table(a)[1]/length(a))*H1
+    
+    if(nrow(t_a)>1)
+    {
+      if(prop2[1]==0&&prop2[2]!=0){
+        H2=-(prop2[2]*log2(prop2[2]))
+      }
+      if(prop2[1]!=0&&prop2[2]==0){
+        H2=-(prop2[1]*log2(prop2[1]))
+      }
+      if(prop2[1]!=0&&prop2[2]!=0){
+        H2=-(prop2[1]*log2(prop2[1]))-(prop2[2]*log2(prop2[2]))
+      }
+      H2=as.numeric(H2)
+      entropy_a=(table(a)[1]/length(a))*H1 +(table(a)[2]/length(a))*H2
+    }
+  }
+  return(as.numeric(entropy_a))
+}
+
 #get results from function
+#test_1
+a=c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+b=c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+labels=c(1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0)
 jointEntropy(a,b,labels)
+
+#test_2
+a=c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+b=c(1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0)
+labels=c(1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0)
+jointEntropy(a,b,labels)
+
+#test_3
+a=c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+b=c(0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0)
+labels=c(1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0)
+jointEntropy(a,b,labels)
+
+#test_4
+a=c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+b=c(1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0)
+labels=c(1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0)
+jointEntropy(a,b,labels)
+
+#test_5
+a=c(0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0)
+b=c(1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0)
+labels=c(1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0)
+jointEntropy(a,b,labels)
+
+#test_6
+a=c(1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0)
+b=c(1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0)
+labels=c(1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0)
+entropy1=jointEntropy(a,b,labels)
+as.logical(abs((entropy1 - 0.344) < 0.01))
+
+
+#------------------The END----------------------------------
+
