@@ -232,60 +232,39 @@ RMSE_model_xgbLinear1=RMSE(predictions_rf,Test$price)
 
 
 #---------------------------------jointEntropy--------------------------------
-#note: If you want to calculate entropy of 2 combined arrays, we can double them like this:
-#ab=a*b, and to get new combined array
-#then, we can find the entropy with the ent_function in row 246.
-
-
-
-
-jointEntropy=function(a,b,labels){ #get 2 arrays and labels
-  ent_1<-ent_function(a,labels)   # calculate entropy for each array
-  ent_2<-ent_function(b,labels)
-  return(sum(ent_1,ent_2))        #return sum of them
+entropy=function(y)
+{
+  if (length(y)==0){
+    return(0)
+  }
+  p1=sum(y)/length(y)
+  p0=1-p1
+  
+  return(-p0*log2(max(1e-10, p0))-p1*log2(max(1e-10, p1)))
 }
 
 
-ent_function=function(a,labels){  #calculate entropy for array by labels
-  #calc entropy for array 
-  t_a=table(a,labels)             #create summary table
-  if (min(a) < 0 || sum(a) <= 0)  #basic condition
+jointEntropy=function(x1,x2,y)
+{
+  total_entropy=0
+  for (i in 0:1 )
   {
-    entropy_a=0
-  }
-  else
-  {#calc proportions from table
-    prop1=t_a[1,]/sum(t_a[1,])   
-    
-    if(prop1[1]==0&&prop1[2]!=0){
-      H1=-(prop1[2]*log2(prop1[2]))
-    }
-    if(prop1[1]!=0&&prop1[2]==0){
-      H1=-(prop1[1]*log2(prop1[1]))
-    }
-    if(prop1[1]!=0&&prop1[2]!=0){
-      H1=-(prop1[1]*log2(prop1[1]))-(prop1[2]*log2(prop1[2]))
-    }
-    H1=as.numeric(H1)
-    entropy_a=(table(a)[1]/length(a))*H1
-    
-    if(nrow(t_a)>1)
+    for (j in 0:1)
     {
-      if(prop2[1]==0&&prop2[2]!=0){
-        H2=-(prop2[2]*log2(prop2[2]))
-      }
-      if(prop2[1]!=0&&prop2[2]==0){
-        H2=-(prop2[1]*log2(prop2[1]))
-      }
-      if(prop2[1]!=0&&prop2[2]!=0){
-        H2=-(prop2[1]*log2(prop2[1]))-(prop2[2]*log2(prop2[2]))
-      }
-      H2=as.numeric(H2)
-      entropy_a=(table(a)[1]/length(a))*H1 +(table(a)[2]/length(a))*H2
+      x1_idx=which(x1==i)
+      x2_idx=which(x2==j)
+      idx=x1_idx[x1_idx%in%x2_idx]
+      subset_y=y[idx]
+      subset_y
+      w = (length(idx)/length(y))
+      e = entropy(subset_y)
+      total_entropy=total_entropy+ e*w    
+      
     }
   }
-  return(as.numeric(entropy_a))
+  return (total_entropy)
 }
+
 
 #get results from function
 #test_1
@@ -327,4 +306,3 @@ as.logical(abs((entropy1 - 0.344) < 0.01))
 
 
 #------------------The END----------------------------------
-
